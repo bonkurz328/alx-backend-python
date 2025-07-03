@@ -1,4 +1,4 @@
-
+def stream_users():
 from itertools import islice
 stream_users = __import__('0-stream_users')
 
