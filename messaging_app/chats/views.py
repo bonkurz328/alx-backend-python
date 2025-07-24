@@ -1,14 +1,20 @@
+from rest_framework import generics
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from .models import MyModel
 from .models import Conversation, Message
 from .serializers import (
     ConversationSerializer,
     ConversationCreateSerializer,
     MessageSerializer,
-    MessageCreateSerializer
+    MessageCreateSerializer,
+    MyModelSerializer
 )
 
+class BookListCreateAPIView(generics.ListCreateAPIView):
+    queryset = Book.objects.all()
+    serializer_class = BookSerializer
 
 class ConversationViewSet(viewsets.ModelViewSet):
     """
