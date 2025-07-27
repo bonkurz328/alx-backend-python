@@ -78,6 +78,8 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
         'chats.permissions.IsParticipantOfConversation',
     ],
+    'DEFAULT_PAGINATION_CLASS': 'chats.pagination.CustomPageNumberPagination',
+    'PAGE_SIZE': 20,
 }
 
 SIMPLE_JWT = {
