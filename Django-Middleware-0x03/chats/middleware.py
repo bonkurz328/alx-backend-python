@@ -81,3 +81,32 @@ class RateLimitMiddleware:
         # Pass the request to the next middleware or view
         response = self.get_response(request)
         return response
+
+class RolePermissionMiddleware:
+    def __init__(self, get_response):
+        """Initialize the middleware with the get_response callable."""
+        self.get_response = get_response
+
+    def __call__(self, request):
+        """Restrict access to specific actions based on user role (admin or moderator)."""
+        # Check if user is authenticated
+        if not request.user.is_authenticated:
+            return HttpResponseForbidden("Access denied: Authentication required.")
+
+        # Check if user has admin or moderator role
+        # Assuming user model has a 'role' field or is_staff/is_superuser for admin
+        if not (request.user.is_staff or request.user.is_superuser):
+            # If user model has a custom 'role' field, check for 'admin' or 'moderator'
+            # Adjust based on your user model; example assumes a 'role' field
+            try:
+                if request.user.role not in ['admin', 'moderator']:
+                    return HttpResponseForbidden("Access denied: Only admins or moderators allowed.")
+            except AttributeError:
+                # Fallback if 'role' field doesn't exist
+                return HttpResponseForbidden("Access denied: Only admins or moderators allowed.")
+
+        # Pass the request to the next middleware or view
+        response = self.get_response(request)
+        return response
+
+
