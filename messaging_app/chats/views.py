@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from .models import MyModel
 from .models import Conversation, Message
+from .permissions import IsParticipantOfConversation
 from .serializers import (
     ConversationSerializer,
     ConversationCreateSerializer,
@@ -22,7 +23,12 @@ class ConversationViewSet(viewsets.ModelViewSet):
     Supports listing conversations and creating new ones.
     """
     queryset = Conversation.objects.all()
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated] 
+    permission_classes = [IsAuthenticated, IsParticipantOfConversation]
+
+    def get_queryset(self):
+        # Only return conversations where the user is a participant
+        return Conversation.objects.filter(participants=self.request.user)
 
     def get_serializer_class(self):
         """
@@ -67,7 +73,10 @@ class MessageViewSet(viewsets.ModelViewSet):
     """
     queryset = Message.objects.all()
     permission_classes = [IsAuthenticated]
+    serializer_class = MessageSerializer
+    permission_classes = [IsAuthenticated, IsParticipantOfConversation]
 
+        
     def get_serializer_class(self):
         """
         Returns appropriate serializer based on action.
@@ -83,6 +92,7 @@ class MessageViewSet(viewsets.ModelViewSet):
         return self.queryset.filter(
             conversation__participants=self.request.user
         ).order_by('sent_at')
+        return Message.objects.filter(conversation__participants=self.request.user)
 
     def create(self, request, *args, **kwargs):
         """
@@ -105,3 +115,10 @@ class MessageViewSet(viewsets.ModelViewSet):
         # Return the created message
         response_serializer = MessageSerializer(message)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+
+
+
+
+
+
+
