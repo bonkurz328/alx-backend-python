@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _
 import uuid
@@ -87,7 +88,6 @@ class Conversation(models.Model):
         )
         return f"Conversation {self.id} with {participant_names}"
 
-
 class Message(models.Model):
     """
     Model representing a message in a conversation.
@@ -97,6 +97,13 @@ class Message(models.Model):
         default=uuid.uuid4,
         editable=False,
         db_index=True
+    )
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE
+    )
+    content = models.TextField()
+    created_at = models.DateTimeField(
+        auto_now_add=True
     )
     sender = models.ForeignKey(
         User,
@@ -116,6 +123,7 @@ class Message(models.Model):
         auto_now_add=True
     )
 
+
     class Meta:
         ordering = ['sent_at']
 
@@ -125,3 +133,4 @@ class Message(models.Model):
     def get_short_body(self):
         """Return shortened version of message body for display."""
         return (self.message_body[:50] + '...') if len(self.message_body) > 50 else self.message_body
+    
