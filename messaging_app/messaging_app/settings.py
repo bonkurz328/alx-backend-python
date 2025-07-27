@@ -36,6 +36,7 @@ MIDDLEWARE = [
     'apps.core.middleware.RequestLoggingMiddleware',
     'apps.core.middleware.RestrictAccessByTimeMiddleware',
     'apps.core.middleware.RateLimitMiddleware', 
+    'apps.core.middleware.RolePermissionMiddleware', 
 ]
 
 ROOT_URLCONF = 'messaging_app.urls'
