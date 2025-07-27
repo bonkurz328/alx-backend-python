@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from .models import MyModel
 from .models import Conversation, Message
 from .permissions import IsParticipantOfConversation
+from .filters import MessageFilter
 from .serializers import (
     ConversationSerializer,
     ConversationCreateSerializer,
@@ -12,6 +13,8 @@ from .serializers import (
     MessageCreateSerializer,
     MyModelSerializer
 )
+
+
 
 class BookListCreateAPIView(generics.ListCreateAPIView):
     queryset = Book.objects.all()
@@ -24,6 +27,7 @@ class ConversationViewSet(viewsets.ModelViewSet):
     """
     queryset = Conversation.objects.all()
     permission_classes = [IsAuthenticated] 
+    serializer_class = ConversationSerializer
     permission_classes = [IsAuthenticated, IsParticipantOfConversation]
 
     def get_queryset(self):
@@ -76,7 +80,12 @@ class MessageViewSet(viewsets.ModelViewSet):
     serializer_class = MessageSerializer
     permission_classes = [IsAuthenticated, IsParticipantOfConversation]
 
-        
+class MessageViewSet(viewsets.ModelViewSet):
+    queryset = Message.objects.all()
+    serializer_class = MessageSerializer
+    permission_classes = [IsAuthenticated, IsParticipantOfConversation]
+    filterset_class = MessageFilter
+
     def get_serializer_class(self):
         """
         Returns appropriate serializer based on action.
@@ -92,7 +101,7 @@ class MessageViewSet(viewsets.ModelViewSet):
         return self.queryset.filter(
             conversation__participants=self.request.user
         ).order_by('sent_at')
-        return Message.objects.filter(conversation__participants=self.request.user)
+        return Message.objects.filter(conversation__participants=self.request.user).order_by('-created_at') 
 
     def create(self, request, *args, **kwargs):
         """
@@ -115,3 +124,4 @@ class MessageViewSet(viewsets.ModelViewSet):
         # Return the created message
         response_serializer = MessageSerializer(message)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+
