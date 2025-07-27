@@ -35,6 +35,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'apps.core.middleware.RequestLoggingMiddleware',
     'apps.core.middleware.RestrictAccessByTimeMiddleware',
+    'apps.core.middleware.RateLimitMiddleware', 
 ]
 
 ROOT_URLCONF = 'messaging_app.urls'
