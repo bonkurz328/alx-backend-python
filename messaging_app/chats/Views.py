@@ -115,10 +115,3 @@ class MessageViewSet(viewsets.ModelViewSet):
         # Return the created message
         response_serializer = MessageSerializer(message)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
-
-
-
-
-
-
-
