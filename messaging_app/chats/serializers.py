@@ -2,7 +2,6 @@ from rest_framework import serializers
 from .models import Book
 from .models import User, Conversation, Message
 
-
 class BookSerializer(serializers.ModelSerializer):
     class Meta:
         model = Book
@@ -28,8 +27,7 @@ class UserSerializer(serializers.ModelSerializer):
             'password': {'write_only': True},
             'created_at': {'read_only': True}
         }
-
-
+        
 class MessageSerializer(serializers.ModelSerializer):
     """
     Serializer for the Message model.
@@ -44,9 +42,12 @@ class MessageSerializer(serializers.ModelSerializer):
             'sender',
             'message_body',
             'sent_at'
+            'conversation', 
+            'user', 
+            'content', 
+            'created_at'
         ]
         read_only_fields = ['id', 'sent_at']
-
 
 class ConversationSerializer(serializers.ModelSerializer):
     """
@@ -77,6 +78,7 @@ class ConversationCreateSerializer(serializers.ModelSerializer):
         write_only=True,
         required=True
     )
+
 
     class Meta:
         model = Conversation
@@ -118,3 +120,4 @@ class MessageCreateSerializer(serializers.ModelSerializer):
                     "You are not a participant in this conversation."
                 )
         return value
+
