@@ -1,6 +1,8 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
+from django.http import HttpResponse
 from django.http import HttpResponseForbidden
+from collections import defaultdict
 
 # Configure logger for request logging
 logger = logging.getLogger('request_logger')
@@ -36,6 +38,46 @@ class RestrictAccessByTimeMiddleware:
         # Check if current time is outside 6 PM (18:00) to 9 PM (21:00)
         if not (18 <= current_hour < 21):
             return HttpResponseForbidden("Access to the messaging app is restricted outside of 6 PM to 9 PM.")
+        # Pass the request to the next middleware or view
+        response = self.get_response(request)
+        return response
+
+class RateLimitMiddleware:
+    def __init__(self, get_response):
+        """Initialize the middleware with the get_response callable and rate limit tracking."""
+        self.get_response = get_response
+        # Store request counts: {ip: [(timestamp, count)]}
+        self.request_counts = defaultdict(list)
+        self.MAX_MESSAGES = 5  # Max messages per minute
+        self.TIME_WINDOW = 60  # Time window in seconds (1 minute)
+
+    def __call__(self, request):
+        """Limit POST requests to 5 per minute per IP address."""
+        # Get client IP (handles cases behind proxies)
+        ip = request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR'))
+        if ip and ',' in ip:
+            ip = ip.split(',')[0].strip()
+
+        # Only apply rate limiting to POST requests (assumed to be message submissions)
+        if request.method == 'POST':
+            current_time = datetime.now()
+            # Clean up old requests outside the time window
+            self.request_counts[ip] = [
+                t for t in self.request_counts[ip]
+                if (current_time - t[0]).total_seconds() <= self.TIME_WINDOW
+            ]
+            # Add current request timestamp
+            self.request_counts[ip].append((current_time, 1))
+            # Count requests in the time window
+            request_count = len(self.request_counts[ip])
+
+            # Check if limit is exceeded
+            if request_count > self.MAX_MESSAGES:
+                return HttpResponse(
+                    "Rate limit exceeded: Only 5 messages allowed per minute.",
+                    status=429  # Too Many Requests
+                )
+
         # Pass the request to the next middleware or view
         response = self.get_response(request)
         return response
