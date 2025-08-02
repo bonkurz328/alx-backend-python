@@ -108,4 +108,64 @@ class MessageNotificationTests(TestCase):
         self.assertEqual(Notification.objects.filter(user=self.sender).count(), 0)
         self.assertEqual(MessageHistory.objects.filter(editor=self.sender).count(), 0)
 
+    def test_threaded_messages(self):
+        # Create a parent message
+        parent_message = Message.objects.create(
+            sender=self.sender,
+            receiver=self.receiver,
+            content="Parent message",
+            timestamp=timezone.now()
+        )
+
+        # Create a reply
+        reply = Message.objects.create(
+            sender=self.receiver,
+            receiver=self.sender,
+            content="Reply to parent",
+            parent_message=parent_message,
+            timestamp=timezone.now()
+        )
+
+        # Create a nested reply
+        nested_reply = Message.objects.create(
+            sender=self.sender,
+            receiver=self.receiver,
+            content="Reply to reply",
+            parent_message=reply,
+            timestamp=timezone.now()
+        )
+
+        # Fetch thread with optimization
+        thread = parent_message.get_thread()
+
+        # Verify the thread structure
+        self.assertEqual(thread.id, parent_message.id)
+        self.assertEqual(thread.replies.count(), 1)
+        self.assertEqual(thread.replies.first().id, reply.id)
+        self.assertEqual(thread.replies.first().replies.count(), 1)
+        self.assertEqual(thread.replies.first().replies.first().id, nested_reply.id)
+
+    def test_query_optimization(self):
+        # Create a parent message and replies
+        parent_message = Message.objects.create(
+            sender=self.sender,
+            receiver=self.receiver,
+            content="Parent message",
+            timestamp=timezone.now()
+        )
+        Message.objects.create(
+            sender=self.receiver,
+            receiver=self.sender,
+            content="Reply",
+            parent_message=parent_message,
+            timestamp=timezone.now()
+        )
+
+        # Test optimized query
+        with self.assertNumQueries(2):  # One for message, one for replies
+            message = Message.objects.select_related('sender', 'receiver').prefetch_related('replies').get(id=parent_message.id)
+            sender_username = message.sender.username
+            receiver_username = message.receiver.username
+            replies = list(message.replies.all())
+
 
