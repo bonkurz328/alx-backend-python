@@ -2,11 +2,13 @@ from django.test import TestCase
 from django.contrib.auth.models import User
 from .models import Message, Notification, MessageHistory
 from django.utils import timezone
+from django.core.cache import cache
 
 class MessageNotificationTests(TestCase):
     def setUp(self):
         self.sender = User.objects.create_user(username='sender', password='testpass123')
         self.receiver = User.objects.create_user(username='receiver', password='testpass123')
+        cache.clear()  # Clear cache before each test
 
     def test_message_creation_triggers_notification(self):
         # Create a message
@@ -197,5 +199,42 @@ class MessageNotificationTests(TestCase):
             messages = Message.unread.unread_for_user(self.receiver)
             for msg in messages:
                 _ = msg.id, msg.sender.username, msg.content, msg.timestamp, msg.parent_message_id
+
+    def test_inbox_view_caching(self):
+        # Create an unread message
+        Message.objects.create(
+            sender=self.sender,
+            receiver=self.receiver,
+            content="Unread message",
+            timestamp=timezone.now(),
+            is_read=False
+        )
+
+        # First request to cache the view
+        self.client.login(username='receiver', password='testpass123')
+        with self.assertNumQueries(1):  # Expect query for initial fetch
+            response = self.client.get(reverse('inbox'))
+            self.assertEqual(response.status_code, 200)
+
+        # Second request should hit cache
+        with self.assertNumQueries(0):  # No queries due to cache
+            response = self.client.get(reverse('inbox'))
+            self.assertEqual(response.status_code, 200)
+
+        # Create a new message and clear cache to simulate timeout
+        cache.clear()
+        Message.objects.create(
+            sender=self.sender,
+            receiver=self.receiver,
+            content="New unread message",
+            timestamp=timezone.now(),
+            is_read=False
+        )
+
+        # Request after cache clear should hit database again
+        with self.assertNumQueries(1):  # Expect query after cache clear
+            response = self.client.get(reverse('inbox'))
+            self.assertEqual(response.status_code, 200)
+            self.assertContains(response, "New unread message")
 
 
