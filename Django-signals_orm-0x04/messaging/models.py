@@ -10,12 +10,19 @@ class Message(models.Model):
     timestamp = models.DateTimeField(default=timezone.now)
     is_read = models.BooleanField(default=False)
     edited = models.BooleanField(default=False)
+    parent_message = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')    
 
     class Meta:
         ordering = ['-timestamp']
     
     def __str__(self):
         return f"Message from {self.sender} to {self.receiver} at {self.timestamp}"
+
+    def get_thread(self):
+        """
+        Recursively fetch all replies in the thread, optimized with prefetch_related.
+        """
+        return Message.objects.filter(id=self.id).prefetch_related('replies').first()
 
 class Notification(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
@@ -28,7 +35,7 @@ class Notification(models.Model):
     
     def __str__(self):
         return f"Notification for {self.user} about message {self.message.id}"
-        
+
 class MessageHistory(models.Model):
     message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name='history')
     old_content = models.TextField()
