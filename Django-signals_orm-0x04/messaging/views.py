@@ -24,4 +24,12 @@ class MessageDetailView(DetailView):
         # Optimize query with prefetch_related for replies and select_related for sender/receiver
         return Message.objects.select_related('sender', 'receiver').prefetch_related('replies').get(pk=self.kwargs['pk'])
 
+@login_required
+def inbox(request):
+    """
+    Display unread messages for the logged-in user.
+    """
+    unread_messages = Message.unread.unread_for_user(request.user)
+    return render(request, 'messaging/inbox.html', {'unread_messages': unread_messages})
+
 
