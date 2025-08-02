@@ -12,6 +12,9 @@ class Message(models.Model):
     edited = models.BooleanField(default=False)
     parent_message = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')    
 
+    objects = models.Manager()  # Default manager
+    unread = UnreadMessagesManager()  # Custom manager for unread messages
+
     class Meta:
         ordering = ['-timestamp']
     
@@ -47,4 +50,12 @@ class MessageHistory(models.Model):
     
     def __str__(self):
         return f"Edit history for message {self.message.id} at {self.edited_at}"
+
+class UnreadMessagesManager(models.Manager):
+    def unread_for_user(self, user):
+        """
+        Returns unread messages for a specific user, optimized with .only().
+        """
+        return self.filter(receiver=user, is_read=False).only('id', 'sender__username', 'content', 'timestamp', 'parent_message_id')
+
 
