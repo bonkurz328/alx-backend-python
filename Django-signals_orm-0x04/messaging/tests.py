@@ -7,7 +7,7 @@ class MessageNotificationTests(TestCase):
     def setUp(self):
         self.sender = User.objects.create_user(username='sender', password='testpass123')
         self.receiver = User.objects.create_user(username='receiver', password='testpass123')
-    
+
     def test_message_creation_triggers_notification(self):
         # Create a message
         message = Message.objects.create(
@@ -42,7 +42,7 @@ class MessageNotificationTests(TestCase):
 
         # Check that no new notification was created
         self.assertEqual(Notification.objects.count(), initial_count)
-        
+
     def test_message_edit_creates_history(self):
         # Create a message
         message = Message.objects.create(
@@ -80,3 +80,32 @@ class MessageNotificationTests(TestCase):
         # Check that no history was created
         self.assertEqual(MessageHistory.objects.count(), 0)
         self.assertFalse(message.edited)
+
+    def test_user_deletion_cleans_related_data(self):
+        # Create a message
+        message = Message.objects.create(
+            sender=self.sender,
+            receiver=self.receiver,
+            content="Test message",
+            timestamp=timezone.now()
+        )
+
+        # Create a message history
+        message.content = "Updated message"
+        message.save()
+
+        # Verify initial data
+        self.assertEqual(Message.objects.count(), 1)
+        self.assertEqual(Notification.objects.count(), 1)
+        self.assertEqual(MessageHistory.objects.count(), 1)
+
+        # Delete the sender
+        self.sender.delete()
+
+        # Verify all related data is deleted
+        self.assertEqual(Message.objects.filter(sender=self.sender).count(), 0)
+        self.assertEqual(Message.objects.filter(receiver=self.sender).count(), 0)
+        self.assertEqual(Notification.objects.filter(user=self.sender).count(), 0)
+        self.assertEqual(MessageHistory.objects.filter(editor=self.sender).count(), 0)
+
+
