@@ -1,0 +1,8 @@
+Django==4.2.*          # The web framework
+djangorestframework==3.14.*  # If using Django REST Framework
+psycopg2-binary==2.9.* # PostgreSQL adapter (if using PostgreSQL)
+python-decouple==3.8.* # For environment variables
+drf-yasg==1.21.*       # For Swagger/OpenAPI docs (if used)
+channels==4.0.*        # For WebSocket support (if used)
+celery==5.3.*          # For async tasks (if used)
+redis==4.5.*           # For caching/queue (if used)
