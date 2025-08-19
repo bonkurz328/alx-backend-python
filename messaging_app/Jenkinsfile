@@ -1,0 +1,63 @@
+pipeline {
+    agent any
+    
+    environment {
+        PYTHON_VERSION = '3.9'
+        APP_DIR = 'messaging_app'
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        
+        stage('Setup Python Environment') {
+            steps {
+                sh """
+                    cd ${env.APP_DIR}
+                    python${env.PYTHON_VERSION} -m venv venv
+                    . venv/bin/activate
+                    pip install --upgrade pip
+                    pip install -r requirements.txt
+                """
+            }
+        }
+        
+        stage('Run Tests') {
+            steps {
+                sh """
+                    cd ${env.APP_DIR}
+                    . venv/bin/activate
+                    python -m pytest --junitxml=test-results.xml
+                """
+            }
+            post {
+                always {
+                    junit "${env.APP_DIR}/test-results.xml"
+                }
+            }
+        }
+        
+        stage('Linting') {
+            steps {
+                sh """
+                    cd ${env.APP_DIR}
+                    . venv/bin/activate
+                    flake8 . --max-line-length=127 --show-source --statistics || true
+                """
+            }
+        }
+    }
+    
+    post {
+        always {
+            sh """
+                cd ${env.APP_DIR}
+                rm -rf venv
+            """
+            cleanWs()
+        }
+    }
+}
