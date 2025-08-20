@@ -2,7 +2,7 @@ pipeline {
     agent any
     
     environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
+        DOCKERHUB_CREDENTIALS = credentials('wob-jenkins-id')
         IMAGE_NAME = 'WoB/django-messaging-app'
         DOCKER_REGISTRY = 'https://index.docker.io/v1/'
         PROJECT_DIR = 'messaging_app'
