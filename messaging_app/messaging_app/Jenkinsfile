@@ -3,7 +3,7 @@ pipeline {
     
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
-        IMAGE_NAME = 'your-dockerhub-username/django-messaging-app'
+        IMAGE_NAME = 'WoB/django-messaging-app'
         DOCKER_REGISTRY = 'https://index.docker.io/v1/'
         PROJECT_DIR = 'messaging_app'
         VENV_DIR = 'venv'
@@ -14,7 +14,7 @@ pipeline {
             steps {
                 git branch: 'main', 
                 url: 'https://github.com/bonkurz328/alx-backend-python.git',
-                credentialsId: 'github-credentials'
+                credentialsId: 'wob-jenkins-id'
             }
         }
         
