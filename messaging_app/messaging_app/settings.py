@@ -2,6 +2,8 @@
 Django settings for messaging_app project.
 """
 
+import os
+from django.core.management.utils import get_random_secret_key
 from datetime import timedelta
 from pathlib import Path
 
@@ -121,3 +123,24 @@ SIMPLE_JWT = {
 
     'JTI_CLAIM': 'jti',
 }
+
+# Database
+# Uses environment variables with fallback to SQLite for local development
+DATABASES = {
+    'default': {
+        'ENGINE': os.environ.get('DB_ENGINE', 'django.db.backends.sqlite3'),
+        'NAME': os.environ.get('DB_NAME', os.path.join(BASE_DIR, 'db.sqlite3')),
+        'USER': os.environ.get('DB_USER', ''),
+        'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+        'HOST': os.environ.get('DB_HOST', ''),
+        'PORT': os.environ.get('DB_PORT', ''),
+    }
+}
+
+# For GitHub Actions MySQL testing
+if os.environ.get('GITHUB_ACTIONS') == 'true':
+    DATABASES['default']['TEST'] = {
+        'NAME': os.environ.get('DB_NAME'),
+        'CHARSET': 'utf8mb4',
+        'COLLATION': 'utf8mb4_unicode_ci',
+    }
